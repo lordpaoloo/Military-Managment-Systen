@@ -1,0 +1,981 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1142</width>
+    <height>724</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>20</y>
+      <width>1081</width>
+      <height>651</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::RightToLeft</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="main">
+     <attribute name="title">
+      <string>الرئيسية</string>
+     </attribute>
+     <widget class="QLineEdit" name="Military_Code">
+      <property name="geometry">
+       <rect>
+        <x>945</x>
+        <y>20</y>
+        <width>113</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>الرقم العسكري</string>
+      </property>
+     </widget>
+     <widget class="QTextBrowser" name="Agent_Data">
+      <property name="geometry">
+       <rect>
+        <x>640</x>
+        <y>60</y>
+        <width>421</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="html">
+       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Search_Bycode">
+      <property name="geometry">
+       <rect>
+        <x>855</x>
+        <y>20</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>بحث</string>
+      </property>
+      <property name="shortcut">
+       <string>Return</string>
+      </property>
+     </widget>
+     <widget class="QFrame" name="Currnet_Holiday">
+      <property name="geometry">
+       <rect>
+        <x>860</x>
+        <y>250</y>
+        <width>201</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(223, 223, 223);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <widget class="QCheckBox" name="Started_Box">
+       <property name="geometry">
+        <rect>
+         <x>50</x>
+         <y>150</y>
+         <width>101</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>تم مباشره العمل </string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="Currnet_Holiday_label">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>0</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>الاجازة الحالية</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="formLayoutWidget_2">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>160</width>
+         <height>110</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="Current_Holiday_Kind">
+          <property name="text">
+           <string>نوع الاجازة:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="Current_Holiday_Duration">
+          <property name="text">
+           <string>مدة الاجازة:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="Current_Holiday_Start">
+          <property name="text">
+           <string>تاريخ البداية:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="Current_Holiday_End">
+          <property name="text">
+           <string>تاريخ العودة:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="Absence_Period">
+          <property name="text">
+           <string>مدة التطويف :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="Remaining_Days">
+          <property name="text">
+           <string>المتبقي:</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QFrame" name="Add_Holiday_Frame">
+      <property name="geometry">
+       <rect>
+        <x>640</x>
+        <y>250</y>
+        <width>201</width>
+        <height>181</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(223, 223, 223);</string>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+      <widget class="QPushButton" name="Add_Holiday_btn">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>150</y>
+         <width>75</width>
+         <height>23</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(255, 255, 255);</string>
+       </property>
+       <property name="text">
+        <string>اضافة اجازة</string>
+       </property>
+      </widget>
+      <widget class="QWidget" name="formLayoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>30</y>
+         <width>160</width>
+         <height>111</height>
+        </rect>
+       </property>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="Holiday_Duration">
+          <property name="text">
+           <string>مدة الاجازة :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="Holiday_Duration_input"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="Holiday_Start">
+          <property name="text">
+           <string>تاريخ البداية :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="Holiday_Start_input"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="Holiday_End">
+          <property name="text">
+           <string>تاريخ العودة :</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="Holiday_End_input"/>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="comboBox">
+          <item>
+           <property name="text">
+            <string>اعتيادية</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>عرضية</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="Holiday_Kind">
+          <property name="text">
+           <string>نوع الاجازة :</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QTableWidget" name="Holidays_History">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>60</y>
+        <width>621</width>
+        <height>371</height>
+       </rect>
+      </property>
+      <property name="rowCount">
+       <number>60</number>
+      </property>
+      <property name="columnCount">
+       <number>7</number>
+      </property>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <row/>
+      <column>
+       <property name="text">
+        <string>الرقم العسكرى</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>نوع الاجازة</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>مدة الاجازة</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>تاربخ البداية</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>تاربخ النهابة</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>مدة التطويف</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>اسم المستخدم</string>
+       </property>
+      </column>
+      <item row="0" column="0">
+       <property name="text">
+        <string/>
+       </property>
+      </item>
+      <item row="0" column="1">
+       <property name="text">
+        <string/>
+       </property>
+      </item>
+      <item row="0" column="2">
+       <property name="text">
+        <string/>
+       </property>
+      </item>
+      <item row="0" column="3">
+       <property name="text">
+        <string/>
+       </property>
+      </item>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>330</y>
+        <width>71</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="print_1">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>470</y>
+        <width>141</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>طباعة</string>
+      </property>
+      <property name="shortcut">
+       <string>F1</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_1">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>540</y>
+        <width>141</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>تعديل</string>
+      </property>
+      <property name="shortcut">
+       <string>F2</string>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="alert_section">
+      <property name="geometry">
+       <rect>
+        <x>640</x>
+        <y>450</y>
+        <width>421</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <attribute name="horizontalHeaderDefaultSectionSize">
+       <number>210</number>
+      </attribute>
+      <column>
+       <property name="text">
+        <string>الاسم</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>مدة التطويف</string>
+       </property>
+      </column>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="add_agent">
+     <attribute name="title">
+      <string>ادارة الافراد</string>
+     </attribute>
+     <widget class="QLabel" name="Military_Number">
+      <property name="geometry">
+       <rect>
+        <x>950</x>
+        <y>90</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>الرقم العسكري :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Mobile_Number">
+      <property name="geometry">
+       <rect>
+        <x>950</x>
+        <y>140</y>
+        <width>81</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>رقم الجوال :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="General_Number">
+      <property name="geometry">
+       <rect>
+        <x>960</x>
+        <y>60</y>
+        <width>71</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>الرقم العام : </string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Military_Rank">
+      <property name="geometry">
+       <rect>
+        <x>960</x>
+        <y>240</y>
+        <width>47</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>الرتبة :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Governorate">
+      <property name="geometry">
+       <rect>
+        <x>910</x>
+        <y>210</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>الملاك :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Civil_Registry">
+      <property name="geometry">
+       <rect>
+        <x>950</x>
+        <y>120</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>السجل المدني :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="The_Group">
+      <property name="geometry">
+       <rect>
+        <x>930</x>
+        <y>170</y>
+        <width>101</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>المجموعة :</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Name">
+      <property name="geometry">
+       <rect>
+        <x>960</x>
+        <y>30</y>
+        <width>48</width>
+        <height>18</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>الاسم :</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Name_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>30</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="General_number_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>60</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Military_Number_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>90</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Civil_Registry_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>120</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Mobile_Number_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>150</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="The_Group_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>180</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Governorate_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>210</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Military_Rank_input">
+      <property name="geometry">
+       <rect>
+        <x>740</x>
+        <y>240</y>
+        <width>211</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Add_Agent_btn">
+      <property name="geometry">
+       <rect>
+        <x>800</x>
+        <y>280</y>
+        <width>101</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true"> font-size: 15px;</string>
+      </property>
+      <property name="text">
+       <string>اضافة فرد</string>
+      </property>
+     </widget>
+     <widget class="QTableWidget" name="agents_section">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>30</y>
+        <width>701</width>
+        <height>591</height>
+       </rect>
+      </property>
+      <row>
+       <property name="text">
+        <string>1</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>2</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>4</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>5</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>6</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>7</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>8</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>9</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>10</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>11</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>12</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>13</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>14</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>15</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>16</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>17</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>18</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>19</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>20</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>21</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>22</string>
+       </property>
+      </row>
+      <row>
+       <property name="text">
+        <string>23</string>
+       </property>
+      </row>
+      <column>
+       <property name="text">
+        <string>الاسم </string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>الرتية</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>الرقم الخاص</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>الرقم العام</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>السجل</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>الجوال</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>المجموعة</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>الملاك</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="edit_2">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>540</y>
+        <width>141</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>تعديل</string>
+      </property>
+      <property name="shortcut">
+       <string>F2</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="print_2">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>470</y>
+        <width>141</width>
+        <height>51</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>طباعة</string>
+      </property>
+      <property name="shortcut">
+       <string>F1</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1142</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::RightToLeft</enum>
+   </property>
+   <widget class="QMenu" name="menu">
+    <property name="title">
+     <string>مدير الوحدة</string>
+    </property>
+    <addaction name="Add_User"/>
+   </widget>
+   <addaction name="menu"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="Add_User">
+   <property name="text">
+    <string>اضافه مستخدم</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
