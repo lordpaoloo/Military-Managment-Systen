@@ -196,14 +196,14 @@ class report(QDialog):
             "مدة الاجازة",
             "نوع الاجازة",
             "الاسم",
-            "الرقم العسكري",
+            "الرقم الخاص",
         ]
 
         # Reorder the data to match headers
         sorted_data = [headers]
         for row in table_data:
             sorted_row = [
-                row[7],  # الرقم العسكري
+                row[7],  # الرقم الخاص
                 row[6],  # الاسم
                 row[8],  # نوع الاجازة
                 row[5],  # مدة الاجازة
@@ -554,7 +554,7 @@ class PrintDialog(QDialog):
             "تاريخ البدابة",
             "مدة الاجازة",
             "نوع الاجازة",
-            "الرقم العسكري",
+            "الرقم الخاص",
         ]
 
         # Reorder the data to match headers
@@ -562,7 +562,7 @@ class PrintDialog(QDialog):
         print(table_data)  # Start with headers
         for row in table_data:
             sorted_row = [
-                row[6],  # الرقم العسكري
+                row[6],  # الرقم الخاص
                 row[5],  # نوع الاجازة
                 row[7],  # مدة الاجازة
                 row[4],  # تاريخ البدابة
@@ -629,7 +629,7 @@ class EditHistory(QtWidgets.QDialog):
         self.Holidays_History.setColumnCount(8)
         self.Holidays_History.setHorizontalHeaderLabels(
             [
-                "الرقم العسكرى",
+                "الرقم الخاص",
                 "نوع الاجازة",
                 "مدة الاجازة",
                 "تاربخ البداية",
@@ -788,9 +788,22 @@ class AdminUsersDialog(QtWidgets.QDialog):
         self.user_name = QtWidgets.QLabel(self)
         self.user_name.setObjectName("user_name")
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.user_name)
+
+        # Add the "Add", "Edit", and "Save" buttons
         self.add_user_btn = QtWidgets.QPushButton(self)
         self.add_user_btn.setObjectName("add_user_btn")
         self.formLayout.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.add_user_btn)
+
+        self.edit_user_btn = QtWidgets.QPushButton(self)
+        self.edit_user_btn.setObjectName("edit_user_btn")
+        self.formLayout.setWidget(7, QtWidgets.QFormLayout.FieldRole, self.edit_user_btn)
+        self.edit_user_btn.setEnabled(False)  # Disable the edit button initially
+
+        self.save_user_btn = QtWidgets.QPushButton(self)
+        self.save_user_btn.setObjectName("save_user_btn")
+        self.formLayout.setWidget(8, QtWidgets.QFormLayout.FieldRole, self.save_user_btn)
+        self.save_user_btn.setEnabled(False)  # Disable the save button initially
+
         self.gridLayout.addLayout(self.formLayout, 1, 0, 1, 1)
 
         # ButtonBox for dialog buttons
@@ -804,6 +817,9 @@ class AdminUsersDialog(QtWidgets.QDialog):
         self.buttonBox.accepted.connect(self.accept)  # Connect the accept signal
         self.buttonBox.rejected.connect(self.reject)  # Connect the reject signal
         self.add_user_btn.clicked.connect(self.add_user)  # Connect the add user button
+        self.edit_user_btn.clicked.connect(self.edit_user)  # Connect the edit user button
+        self.save_user_btn.clicked.connect(self.save_user)  # Connect the save user button
+        self.admin_users.itemSelectionChanged.connect(self.load_selected_user_data)  # Load selected user data
         QtCore.QMetaObject.connectSlotsByName(self)
 
         # Load data into the table
@@ -815,6 +831,8 @@ class AdminUsersDialog(QtWidgets.QDialog):
         self.code.setText(_translate("AdminUsersDialog", "الكود :"))
         self.user_name.setText(_translate("AdminUsersDialog", "الاسم:"))
         self.add_user_btn.setText(_translate("AdminUsersDialog", "اضافة"))
+        self.edit_user_btn.setText(_translate("AdminUsersDialog", "تعديل"))
+        self.save_user_btn.setText(_translate("AdminUsersDialog", "حفظ"))
 
     def load_data(self):
         # Connect to the database and fetch data from the admin_users table
@@ -829,6 +847,72 @@ class AdminUsersDialog(QtWidgets.QDialog):
         for row_index, row_data in enumerate(rows):
             self.admin_users.setItem(row_index, 0, QtWidgets.QTableWidgetItem(row_data[0]))
             self.admin_users.setItem(row_index, 1, QtWidgets.QTableWidgetItem(str(row_data[1])))
+
+    def load_selected_user_data(self):
+        # Load the selected user data into the input fields
+        selected_row = self.admin_users.currentRow()
+        if selected_row >= 0:
+            user_name_item = self.admin_users.item(selected_row, 0)
+            user_code_item = self.admin_users.item(selected_row, 1)
+
+            if user_name_item and user_code_item:
+                self.user_name_input.setText(user_name_item.text())
+                self.code_input.setText(user_code_item.text())
+                self.edit_user_btn.setEnabled(True)  # Enable the edit button
+                self.save_user_btn.setEnabled(False)  # Disable the save button
+                self.add_user_btn.setEnabled(False)  # Disable the add button
+
+    def edit_user(self):
+        # Enable editing
+        self.user_name_input.setEnabled(True)
+        self.code_input.setEnabled(True)
+        self.save_user_btn.setEnabled(True)  # Enable the save button
+        self.edit_user_btn.setEnabled(False)  # Disable the edit button
+        self.add_user_btn.setEnabled(False)  # Disable the add button
+
+    def save_user(self):
+        # Get the user input
+        user_name = self.user_name_input.text()
+        user_code = self.code_input.text()
+
+        if user_name and user_code:
+            try:
+                # Connect to the database
+                conn = sqlite3.connect('agents.db')
+                cursor = conn.cursor()
+
+                # Check if a row is selected for updating
+                selected_row = self.admin_users.currentRow()
+                if selected_row >= 0:
+                    # Update existing user
+                    original_code = self.admin_users.item(selected_row, 1).text()
+                    cursor.execute("UPDATE admin_users SET user_name = ?, user_code = ? WHERE user_code = ?", 
+                                   (user_name, user_code, original_code))
+                    conn.commit()
+                    conn.close()
+
+                    # Update the table
+                    self.load_data()
+
+                    # Clear input fields
+                    self.user_name_input.clear()
+                    self.code_input.clear()
+
+                    # Reset buttons
+                    self.user_name_input.setEnabled(False)
+                    self.code_input.setEnabled(False)
+                    self.save_user_btn.setEnabled(False)  # Disable the save button
+                    self.edit_user_btn.setEnabled(True)  # Enable the edit button
+                    self.add_user_btn.setEnabled(True)  # Enable the add button
+
+                    # Show success message
+                    QtWidgets.QMessageBox.information(self, "نجاح", "تم حفظ التغييرات بنجاح.")
+            except sqlite3.Error as e:
+                # Show error message
+                QtWidgets.QMessageBox.critical(self, "خطأ", f"حدث خطأ أثناء حفظ التغييرات: {str(e)}")
+        else:
+            # Show warning message if fields are empty
+            QtWidgets.QMessageBox.warning(self, "تحذير", "يرجى ملء جميع الحقول.")
 
     def add_user(self):
         # Get the user input
@@ -850,6 +934,11 @@ class AdminUsersDialog(QtWidgets.QDialog):
                 # Clear input fields
                 self.user_name_input.clear()
                 self.code_input.clear()
+
+                # Reset buttons
+                self.save_user_btn.setEnabled(False)  # Disable the save button
+                self.edit_user_btn.setEnabled(False)  # Disable the edit button
+                self.add_user_btn.setEnabled(True)  # Enable the add button
 
                 # Show success message
                 QtWidgets.QMessageBox.information(self, "نجاح", "تمت إضافة المستخدم بنجاح.")
@@ -877,7 +966,7 @@ class EditAgentsDialog(QtWidgets.QDialog):
             [
                 "الاسم",
                 "الرتبة العسكرية",
-                "الرقم العسكري",
+                "الرقم الخاص",
                 "الرقم العام",
                 "السجل المدني",
                 "رقم الجوال",
@@ -1178,7 +1267,7 @@ class Ui_MainWindow(object):
         print(type(absentees))  # For debugging purposes
         print(absentees)
         if absentees:
-            absent_message = "تحقق من قائمة الغياب\n"
+            absent_message = "تحقق من قائمة المطوف\n"
             for absentee in absentees:
                 print(absentee["military_number"])
                 military_number=absentee["military_number"]
@@ -1189,7 +1278,7 @@ class Ui_MainWindow(object):
             # Display the alert in Arabic
             msg_box = QtWidgets.QMessageBox()
             msg_box.setIcon(QtWidgets.QMessageBox.Warning)
-            msg_box.setWindowTitle("تنبيه الغياب")
+            msg_box.setWindowTitle("تنبيه المطوف")
             msg_box.setText(absent_message)
             msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg_box.exec_()
@@ -1197,8 +1286,8 @@ class Ui_MainWindow(object):
             # Optional: Display a message if no absentees are found, in Arabic
             msg_box = QtWidgets.QMessageBox()
             msg_box.setIcon(QtWidgets.QMessageBox.Information)
-            msg_box.setWindowTitle("تنبيه الغياب")
-            msg_box.setText("لم يتم اكتشاف أي غيابات جديدة.")
+            msg_box.setWindowTitle("تنبيه المطوف")
+            msg_box.setText("لم يتم اكتشاف أي تطويف جديد.")
             msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg_box.exec_()
 
@@ -1603,7 +1692,7 @@ class Ui_MainWindow(object):
                                 f"تاريخ الانتهاء : {currnet_holiday['return_date']}"
                             )
                     self.Absence_Period.setText(
-                                f"فترة الغياب : {currnet_holiday['duration_of_absence']}"
+                                f"فترة المطوف : {currnet_holiday['duration_of_absence']}"
                             )
                     self.Remaining_Days.setText(
                                 f"الايام المتبقية : {currnet_holiday['remaining_days']}"
@@ -1613,7 +1702,7 @@ class Ui_MainWindow(object):
                     self.Current_Holiday_Duration.setText(f"مدة الاجازة :")
                     self.Current_Holiday_Start.setText(f"تاريخ البدء : ")
                     self.Current_Holiday_End.setText(f"تاريخ الانتهاء :")
-                    self.Absence_Period.setText(f"فترة الغياب : ")
+                    self.Absence_Period.setText(f"فترة المطوف : ")
                     self.Remaining_Days.setText(f"الايام المتبقية : ")
             else:
                 currnet_holiday = while_holiday
@@ -1630,7 +1719,7 @@ class Ui_MainWindow(object):
                             f"تاريخ الانتهاء : {currnet_holiday['return_date']}"
                         )
                 self.Absence_Period.setText(
-                            f"فترة الغياب : {currnet_holiday['duration_of_absence']}"
+                            f"فترة المطوف : {currnet_holiday['duration_of_absence']}"
                         )
                 self.Remaining_Days.setText(
                             f"الايام المتبقية : {currnet_holiday['remaining_days']}"
@@ -1640,7 +1729,7 @@ class Ui_MainWindow(object):
             self.Current_Holiday_Duration.setText(f"مدة الاجازة : ")
             self.Current_Holiday_Start.setText(f"تاريخ البدء : ")
             self.Current_Holiday_End.setText(f"تاريخ الانتهاء : ")
-            self.Absence_Period.setText(f"فترة الغياب : ")
+            self.Absence_Period.setText(f"فترة المطوف : ")
             self.Remaining_Days.setText(f"الايام المتبقية : ")
 
     def check_current_holiday(self, military_number):
@@ -2015,7 +2104,7 @@ class Ui_MainWindow(object):
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)
                     msg.setWindowTitle("خطأ")
-                    msg.setText("يجب أن يكون الرقم العسكري رقميًا.")
+                    msg.setText("يجب أن يكون الرقم الخاص رقميًا.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec_()
                     return
@@ -2498,7 +2587,7 @@ class Ui_MainWindow(object):
         self.print_1.setText(_translate("MainWindow", "طباعة"))
         self.print_1.setShortcut(_translate("MainWindow", "F1"))
         item = self.Holidays_History.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "الرقم العسكرى"))
+        item.setText(_translate("MainWindow", "الرقم الخاص"))
         item = self.Holidays_History.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "نوع الاجازة"))
         item = self.Holidays_History.horizontalHeaderItem(2)
@@ -2526,11 +2615,11 @@ class Ui_MainWindow(object):
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>"))
-        self.Military_Code.setPlaceholderText(_translate("MainWindow", "الرقم العسكري"))
+        self.Military_Code.setPlaceholderText(_translate("MainWindow", "الرقم الخاص"))
         self.Search_Bycode.setText(_translate("MainWindow", "بحث"))
         self.Search_Bycode.setShortcut(_translate("MainWindow", "Return"))
         item = self.alert_section.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "الرقم العسكري"))
+        item.setText(_translate("MainWindow", "الرقم الخاص"))
         item = self.alert_section.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "الاسم"))
         item = self.alert_section.horizontalHeaderItem(2)
@@ -2544,7 +2633,7 @@ class Ui_MainWindow(object):
         self.Military_Rank.setText(_translate("MainWindow", "الرتبة :"))
         self.General_Number.setText(_translate("MainWindow", "الرقم العام : "))
         self.Name.setText(_translate("MainWindow", "الاسم :"))
-        self.Military_Number.setText(_translate("MainWindow", "الرقم العسكري :"))
+        self.Military_Number.setText(_translate("MainWindow", "الرقم الخاص :"))
         item = self.agents_section.verticalHeaderItem(0)
         item.setText(_translate("MainWindow", "1"))
         item = self.agents_section.verticalHeaderItem(1)
