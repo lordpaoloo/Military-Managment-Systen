@@ -1,6 +1,8 @@
 from PyQt5.QtCore import QTimer, Qt
 from PyQt5 import QtCore, QtWidgets, QtGui
 import sqlite3
+import openpyxl
+from openpyxl.utils import get_column_letter
 from PyQt5.QtPrintSupport import QPrintDialog, QPrinter, QPrinterInfo, QPrintPreviewDialog
 from PyQt5.QtWidgets import (
     QComboBox,
@@ -33,6 +35,196 @@ import sys
 
 
 ##############################  UI Dialog ################################
+class report_bydate(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("أدخل فترة التاريخ")
+
+        # التخطيط
+        layout = QVBoxLayout()
+
+        # التسمية والإدخال
+        self.label_from = QLabel("أدخل تاريخ البداية (YYYY-MM-DD):")
+        self.date_from_input = QLineEdit(self)
+        self.date_from_input.setPlaceholderText("1446-03-05")
+
+        self.label_to = QLabel("أدخل تاريخ النهاية (YYYY-MM-DD):")
+        self.date_to_input = QLineEdit(self)
+        self.date_to_input.setPlaceholderText("1446-03-05")
+
+        # زر الإرسال
+        self.submit_button = QPushButton("إرسال")
+        self.submit_button.clicked.connect(self.on_submit)
+
+        # إضافة العناصر إلى التخطيط
+        layout.addWidget(self.label_from)
+        layout.addWidget(self.date_from_input)
+        layout.addWidget(self.label_to)
+        layout.addWidget(self.date_to_input)
+        layout.addWidget(self.submit_button)
+
+        self.setLayout(layout)
+
+    def on_submit(self):
+        date_from = self.date_from_input.text()
+        date_to = self.date_to_input.text()
+
+        # التحقق من صحة الإدخال
+        if not self.validate_date(date_from) or not self.validate_date(date_to):
+            QMessageBox.warning(self, "إدخال غير صالح", "يرجى إدخال تواريخ صالحة بالصيغة YYYY-MM-DD.")
+            return
+
+        # استعلام قاعدة البيانات
+        data = self.query_database(date_from, date_to)
+
+        if data:
+                        # طلب تحديد مكان حفظ ملف PDF
+            output_filename, _ = QFileDialog.getSaveFileName(
+                self, "حفظ ملف Excel", "", "ملفات Excel (*.xlsx)"
+            )
+
+            if output_filename:
+                self.create_excel(output_filename, data, date_from, date_to)
+                QMessageBox.information(self, "نجاح", "تم إنشاء ملف PDF بنجاح.")
+        else:
+            QMessageBox.information(
+                self, "لا توجد بيانات", "لم يتم العثور على سجلات للفترة المدخلة."
+            )
+
+    def validate_date(self, date_text):
+        # التحقق من الصيغة YYYY-MM-DD
+        try:
+            datetime.strptime(date_text, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
+
+    def query_database(self, date_from, date_to):
+        conn = sqlite3.connect("agents.db")
+        cursor = conn.cursor()
+
+        # Query to match the start_Date within the range
+        query = """
+        SELECT military_number, the_kind_of_holiday, duration_of_vacation, start_Date, return_date, duration_of_absence, user_code, check_in_date
+        FROM holidays_history
+        WHERE start_Date BETWEEN ? AND ?
+        """
+
+        cursor.execute(query, (date_from, date_to))
+        rows = cursor.fetchall()
+        conn.close()
+
+        # Format data
+        formatted_data = []
+        for row in rows:
+            name = self.get_name_by_military_number(
+                row[0]
+            )  # Retrieve name using military number
+            user_name = self.get_username_by_code(
+                row[6]
+            )  # Retrieve user_name using user_code
+            formatted_row = [
+                row[0],  # military_number
+                name,  # name
+                row[1],  # the_kind_of_holiday
+                row[2],  # duration_of_vacation
+                row[3],  # start_Date (Hijri)
+                row[4],  # return_date (Hijri)
+                row[5],  # duration_of_absence
+                user_name,  # user_name
+                row[7],  # check_in_date
+            ]
+            formatted_data.append(formatted_row)
+
+        return formatted_data
+
+    def get_name_by_military_number(self, military_number):
+        conn = sqlite3.connect("agents.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT name FROM users WHERE military_number = ?", (military_number,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else "غير معروف"
+
+    def get_username_by_code(self, user_code):
+        conn = sqlite3.connect("agents.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT user_name FROM admin_users WHERE user_code = ?", (user_code,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else "غير معروف"
+    def create_excel(self, output_filename, table_data, date_from, date_to):
+        # Create a new Excel workbook and select the active worksheet
+        wb = openpyxl.Workbook()
+        ws = wb.active
+
+        # Set the sheet name
+        ws.title = "Holiday Data"
+
+        # Add the report title with the date range at the top
+        ws.merge_cells('A1:I1')
+        ws['A1'] = f"تقرير من {date_from} إلى {date_to}"
+        ws['A1'].font = openpyxl.styles.Font(size=14, bold=True)
+        ws['A1'].alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Define headers in Arabic (corresponding to your table headers)
+        headers = [
+            "اسم المستخدم",
+            "مدة التطويف",
+            "تاريخ العودة",
+            "تاريخ النهاية",
+            "تاريخ البداية",
+            "مدة الاجازة",
+            "نوع الاجازة",
+            "الاسم",
+            "الرقم الخاص",
+        ]
+
+        # Add headers to the second row
+        for col_num, header in enumerate(headers, start=1):
+            col_letter = get_column_letter(col_num)
+            ws[f'{col_letter}2'] = header
+            ws[f'{col_letter}2'].font = openpyxl.styles.Font(bold=True)
+            ws[f'{col_letter}2'].alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Reorder the data to match headers
+        for row_num, row_data in enumerate(table_data, start=3):
+            sorted_row = [
+                row_data[7],  # اسم المستخدم
+                row_data[6],  # مدة التطويف
+                row_data[8],  # تاريخ العودة
+                row_data[5],  # تاريخ النهاية
+                row_data[4],  # تاريخ البداية
+                row_data[3],  # مدة الاجازة
+                row_data[2],  # نوع الاجازة
+                row_data[1],  # الاسم
+                row_data[0],  # الرقم الخاص
+            ]
+
+            # Add sorted row to Excel sheet
+            for col_num, cell_value in enumerate(sorted_row, start=1):
+                col_letter = get_column_letter(col_num)
+                ws[f'{col_letter}{row_num}'] = cell_value
+                ws[f'{col_letter}{row_num}'].alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Adjust column widths
+        for col_num in range(1, len(headers) + 1):
+            col_letter = get_column_letter(col_num)
+            ws.column_dimensions[col_letter].width = 20  # Adjust width as needed
+
+        # Add footer with report generation info
+        last_row = len(table_data) + 4  # Adjust row for footer (after table)
+        ws.merge_cells(f'A{last_row}:I{last_row}')
+        ws[f'A{last_row}'] = f"تقرير تم إنشاؤه في الفترة: {date_from} - {date_to}"
+        ws[f'A{last_row}'].font = openpyxl.styles.Font(italic=True)
+        ws[f'A{last_row}'].alignment = openpyxl.styles.Alignment(horizontal='center')
+
+        # Save the Excel file
+        wb.save(output_filename)
 class report(QDialog):
     def __init__(self):
         super().__init__()
@@ -486,7 +678,6 @@ class PrintDialog(QDialog):
         msg_box.setText("تم ارسال الملف الي الطابعه")
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
-
     def create_pdf(self, output_filename, table_data, user_name, user_code):
         c = canvas.Canvas(output_filename, pagesize=A4)
         width, height = A4
@@ -559,7 +750,6 @@ class PrintDialog(QDialog):
 
         # Reorder the data to match headers
         sorted_data = [headers]
-        print(table_data)  # Start with headers
         for row in table_data:
             sorted_row = [
                 row[6],  # الرقم الخاص
@@ -567,11 +757,12 @@ class PrintDialog(QDialog):
                 row[7],  # مدة الاجازة
                 row[4],  # تاريخ البدابة
                 row[3],  # تاريخ النهاية
-                row[2],  # تاريخ العودة#
-                row[1],  # مدة التطويف"
-                row[0],  # اسم المستخدم"
+                row[2],  # تاريخ العودة
+                row[1],  # مدة التطويف
+                row[0],  # اسم المستخدم
             ]
             sorted_data.append(sorted_row)
+
         # Reshape Arabic text in the table
         reshaped_data = []
         for row in sorted_data:
@@ -585,6 +776,7 @@ class PrintDialog(QDialog):
                     reshaped_row.append(item)
             reshaped_data.append(reshaped_row)
 
+        # Create the table
         table = Table(reshaped_data)
         table.setStyle(
             TableStyle(
@@ -601,161 +793,174 @@ class PrintDialog(QDialog):
             )
         )
 
-        table.wrapOn(c, width, height)
-        table.drawOn(c, 50, text_y - 150)
+        # Automatically split table across multiple pages
+        available_height = text_y - 150  # Adjust as needed to fit your layout
+        table.wrapOn(c, width, available_height)
+        
+        # Draw table on multiple pages if necessary
+        table_height = table._height
+        if table_height > available_height:
+            table_parts = table.split(width, available_height)
+            for part in table_parts:
+                part.wrapOn(c, width, available_height)
+                part.drawOn(c, 50, available_height - part._height)
+                c.showPage()  # Create new page
+                available_height = height - 100  # Reset available height for new page
+        else:
+            table.drawOn(c, 50, text_y - 150)
 
         # Save PDF
         c.save()
 class EditHistory(QtWidgets.QDialog):
-    def __init__(self, military_number):
-        super().__init__()
+        def __init__(self, military_number):
+            super().__init__()
 
-        self.military_number = military_number
-        self.initUI()
-        self.populate_holidays_table()
+            self.military_number = military_number
+            self.initUI()
+            self.populate_holidays_table()
 
-    def initUI(self):
-        self.setObjectName("EditHistoryDialog")
-        self.resize(1000, 800)  # Larger size for the dialog
+        def initUI(self):
+            self.setObjectName("EditHistoryDialog")
+            self.resize(1000, 800)  # Larger size for the dialog
 
-        # Set up grid layout
-        self.gridLayout = QtWidgets.QGridLayout(self)
-        self.gridLayout.setObjectName("gridLayout")
+            # Set up grid layout
+            self.gridLayout = QtWidgets.QGridLayout(self)
+            self.gridLayout.setObjectName("gridLayout")
 
-        # Create and set up holidays table
-        self.Holidays_History = QtWidgets.QTableWidget(self)
-        self.Holidays_History.setObjectName("Holidays_History")
-        self.Holidays_History.setLayoutDirection(QtCore.Qt.RightToLeft)  # Right-to-Left layout
-        self.Holidays_History.setColumnCount(8)
-        self.Holidays_History.setHorizontalHeaderLabels(
-            [
-                "الرقم الخاص",
-                "نوع الاجازة",
-                "مدة الاجازة",
-                "تاربخ البداية",
-                "تاربخ النهاية",
-                "مدة التطويف",
-                "اسم المستخدم",
-                "تاريخ العودة",
-            ]
-        )
-        self.gridLayout.addWidget(self.Holidays_History, 0, 0, 1, 1)
-
-        # Create and set up buttons
-        self.delete_button = QtWidgets.QPushButton(self)
-        self.delete_button.setObjectName("delete_button")
-        self.delete_button.setText("حذف")
-        self.gridLayout.addWidget(self.delete_button, 1, 0, 1, 1)
-        # Create and set up dialog button box
-        self.buttonBox = QtWidgets.QDialogButtonBox(self)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
-        self.buttonBox.setObjectName("buttonBox")
-        self.gridLayout.addWidget(self.buttonBox, 4, 0, 1, 1)
-
-        # Connect signals and slots
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
-        self.delete_button.clicked.connect(self.delete_selected_row)
-
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-    def get_holidays_data(self):
-        connection = sqlite3.connect("agents.db")
-        cursor = connection.cursor()
-        cursor.execute(
-            """
-            SELECT military_number, the_kind_of_holiday, duration_of_vacation, start_Date, return_date, duration_of_absence, user_code, check_in_date
-            FROM holidays_history
-            WHERE military_number = ?
-        """,
-            (self.military_number,),
-        )
-        data = cursor.fetchall()
-        connection.close()
-        return data
-
-    def populate_holidays_table(self):
-        data = self.get_holidays_data()
-        self.Holidays_History.setRowCount(len(data))
-
-        for row_num, row_data in enumerate(data):
-            for col_num, col_data in enumerate(row_data):
-                item = QtWidgets.QTableWidgetItem(str(col_data))
-                if col_num == 0:  # Military Number column
-                    item.setFlags(
-                        item.flags() & ~QtCore.Qt.ItemIsEditable
-                    )  # Make read-only
-                self.Holidays_History.setItem(row_num, col_num, item)
-
-    def save_changes(self):
-        connection = sqlite3.connect("agents.db")
-        cursor = connection.cursor()
-
-        row_count = self.Holidays_History.rowCount()
-        col_count = self.Holidays_History.columnCount()
-
-        for row in range(row_count):
-            row_data = []
-            for column in range(col_count):
-                item = self.Holidays_History.item(row, column)
-                row_data.append(item.text() if item else "")
-
-            cursor.execute(
-                """
-                UPDATE holidays_history
-                SET the_kind_of_holiday=?, duration_of_vacation=?, start_Date=?, return_date=?, duration_of_absence=?, user_code=?, check_in_date=?
-                WHERE military_number=?
-            """,
-                (
-                    row_data[1],
-                    row_data[2],
-                    row_data[3],
-                    row_data[4],
-                    row_data[5],
-                    row_data[6],
-                    row_data[7],
-                    row_data[0],
-                ),
+            # Create and set up holidays table
+            self.Holidays_History = QtWidgets.QTableWidget(self)
+            self.Holidays_History.setObjectName("Holidays_History")
+            self.Holidays_History.setLayoutDirection(QtCore.Qt.RightToLeft)  # Right-to-Left layout
+            self.Holidays_History.setColumnCount(8)
+            self.Holidays_History.setHorizontalHeaderLabels(
+                [
+                    "الرقم الخاص",
+                    "نوع الاجازة",
+                    "مدة الاجازة",
+                    "تاربخ البداية",
+                    "تاربخ النهاية",
+                    "مدة التطويف",
+                    "اسم المستخدم",
+                    "تاريخ العودة",
+                ]
             )
+            self.gridLayout.addWidget(self.Holidays_History, 0, 0, 1, 1)
 
-        connection.commit()
-        connection.close()
+            # Create and set up buttons
+            self.delete_button = QtWidgets.QPushButton(self)
+            self.delete_button.setObjectName("delete_button")
+            self.delete_button.setText("حذف")
+            self.gridLayout.addWidget(self.delete_button, 1, 0, 1, 1)
+            # Create and set up dialog button box
+            self.buttonBox = QtWidgets.QDialogButtonBox(self)
+            self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+            self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+            self.buttonBox.setObjectName("buttonBox")
+            self.gridLayout.addWidget(self.buttonBox, 4, 0, 1, 1)
 
-        # Reset the background color of all cells
-        for row in range(row_count):
-            for column in range(col_count):
-                item = self.Holidays_History.item(row, column)
-                item.setBackground(QtGui.QColor("white"))
+            # Connect signals and slots
+            self.buttonBox.accepted.connect(self.accept)
+            self.buttonBox.rejected.connect(self.reject)
+            self.delete_button.clicked.connect(self.delete_selected_row)
 
-    def delete_selected_row(self):
-        selected_row = self.Holidays_History.currentRow()
-        if selected_row >= 0:
-            # Get the military number and holiday start date of the selected row
-            military_number = self.Holidays_History.item(selected_row, 0).text()
-            start_date = self.Holidays_History.item(selected_row, 3).text()
+            QtCore.QMetaObject.connectSlotsByName(self)
 
-            # Remove the row from the UI
-            self.Holidays_History.removeRow(selected_row)
-
-            # Delete the row from the database
+        def get_holidays_data(self):
             connection = sqlite3.connect("agents.db")
             cursor = connection.cursor()
             cursor.execute(
                 """
-                DELETE FROM holidays_history
-                WHERE military_number = ? AND start_Date = ?
-                """,
-                (military_number, start_date)
+                SELECT military_number, the_kind_of_holiday, duration_of_vacation, start_Date, return_date, duration_of_absence, user_code, check_in_date
+                FROM holidays_history
+                WHERE military_number = ?
+            """,
+                (self.military_number,),
             )
+            data = cursor.fetchall()
+            connection.close()
+            return data
+
+        def populate_holidays_table(self):
+            data = self.get_holidays_data()
+            self.Holidays_History.setRowCount(len(data))
+
+            for row_num, row_data in enumerate(data):
+                for col_num, col_data in enumerate(row_data):
+                    item = QtWidgets.QTableWidgetItem(str(col_data))
+                    if col_num == 0:  # Military Number column
+                        item.setFlags(
+                            item.flags() & ~QtCore.Qt.ItemIsEditable
+                        )  # Make read-only
+                    self.Holidays_History.setItem(row_num, col_num, item)
+
+        def save_changes(self):
+            connection = sqlite3.connect("agents.db")
+            cursor = connection.cursor()
+
+            row_count = self.Holidays_History.rowCount()
+            col_count = self.Holidays_History.columnCount()
+
+            for row in range(row_count):
+                row_data = []
+                for column in range(col_count):
+                    item = self.Holidays_History.item(row, column)
+                    row_data.append(item.text() if item else "")
+
+                cursor.execute(
+                    """
+                    UPDATE holidays_history
+                    SET the_kind_of_holiday=?, duration_of_vacation=?, start_Date=?, return_date=?, duration_of_absence=?, user_code=?, check_in_date=?
+                    WHERE military_number=?
+                """,
+                    (
+                        row_data[1],
+                        row_data[2],
+                        row_data[3],
+                        row_data[4],
+                        row_data[5],
+                        row_data[6],
+                        row_data[7],
+                        row_data[0],
+                    ),
+                )
+
             connection.commit()
             connection.close()
-        msg_box = QtWidgets.QMessageBox()
-        msg_box.setIcon(QtWidgets.QMessageBox.Warning)
-        msg_box.setWindowTitle(" انتبه")
-        msg_box.setText("الرجاء تعديل المتبقي من الاجازات لهذا المستخدم ليتمشي مع اي تعديل تم تغيره")
-        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg_box.exec_()
+
+            # Reset the background color of all cells
+            for row in range(row_count):
+                for column in range(col_count):
+                    item = self.Holidays_History.item(row, column)
+                    item.setBackground(QtGui.QColor("white"))
+
+        def delete_selected_row(self):
+            selected_row = self.Holidays_History.currentRow()
+            if selected_row >= 0:
+                # Get the military number and holiday start date of the selected row
+                military_number = self.Holidays_History.item(selected_row, 0).text()
+                start_date = self.Holidays_History.item(selected_row, 3).text()
+
+                # Remove the row from the UI
+                self.Holidays_History.removeRow(selected_row)
+
+                # Delete the row from the database
+                connection = sqlite3.connect("agents.db")
+                cursor = connection.cursor()
+                cursor.execute(
+                    """
+                    DELETE FROM holidays_history
+                    WHERE military_number = ? AND start_Date = ?
+                    """,
+                    (military_number, start_date)
+                )
+                connection.commit()
+                connection.close()
+            msg_box = QtWidgets.QMessageBox()
+            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+            msg_box.setWindowTitle(" انتبه")
+            msg_box.setText("الرجاء تعديل المتبقي من الاجازات لهذا المستخدم ليتمشي مع اي تعديل تم تغيره")
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
 class AdminUsersDialog(QtWidgets.QDialog):  
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1182,7 +1387,11 @@ class Ui_MainWindow(object):
             msg_box.setText("تم تحديث الاجازات بنجاح")
             msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg_box.exec_()
-
+    def report_bydate(self):
+        check_admin = self.check_admin()
+        if check_admin != False:
+            self.edit_window = report_bydate()
+            self.edit_window.exec_()
     def report(self):
         check_admin = self.check_admin()
         if check_admin != False:
@@ -1601,14 +1810,17 @@ class Ui_MainWindow(object):
         WHERE military_number = ?;
         """
 
-        # Execute the query
+        # Execute the query and fetch all results
         cursor.execute(query, (military_number,))
-        result = cursor.fetchone()
+        results = cursor.fetchall()
 
         # Close the database connection
         conn.close()
 
-        if result:
+        holidays = []
+
+        # Process all holidays for the user
+        for result in results:
             (
                 the_kind_of_holiday,
                 duration_of_vacation,
@@ -1618,13 +1830,12 @@ class Ui_MainWindow(object):
                 user_code,
                 check_in_date,
             ) = result
-            print(type(result[6]))
-            if result[6] == None:
+
+            # If check_in_date is None, calculate the remaining days
+            if check_in_date is None:
                 # Convert Hijri dates to Gregorian
                 if return_date_hijri:
-                    return_date_hijri_obj = convert.Hijri(
-                        *map(int, return_date_hijri.split("-"))
-                    )
+                    return_date_hijri_obj = convert.Hijri(*map(int, return_date_hijri.split("-")))
                     return_date_gregorian = return_date_hijri_obj.to_gregorian()
                     return_date_gregorian_date = date(
                         return_date_gregorian.year,
@@ -1637,17 +1848,13 @@ class Ui_MainWindow(object):
                 # Calculate the remaining days
                 current_date_gregorian = datetime.now().date()
                 if return_date_gregorian_date:
-                    remaining_days = (
-                        return_date_gregorian_date - current_date_gregorian
-                    ).days
+                    remaining_days = (return_date_gregorian_date - current_date_gregorian).days
                     if remaining_days < 0:
                         remaining_days = 0
                 else:
                     remaining_days = None
 
-                
-
-                return {
+                holidays.append({
                     "current_date_hijri": convert.Gregorian(
                         current_date_gregorian.year,
                         current_date_gregorian.month,
@@ -1660,25 +1867,26 @@ class Ui_MainWindow(object):
                     "return_date": return_date_hijri,
                     "duration_of_absence": duration_of_absence,
                     "user_code": user_code,
-                    "check_in_date": (
-                        check_in_date if check_in_date else "Not checked in"
-                    ),
-                }
-            else:
-                return False
+                    "check_in_date": check_in_date if check_in_date else "Not checked in",
+                })
+
+        if holidays:
+            print("------------------------------------------------")
+            print(holidays)
+            print("------------------------------------------------")
+            return holidays
         else:
-            return None
+            return "theres no holdays"
+            return False
+
     def current_holiday(self, military_number):
         while_holiday = self.check_current_holiday(military_number)
+
         unchecked_holiday = self.check_absentees(military_number)
-        print(unchecked_holiday)
-        print(while_holiday)
+        print("unchecked_holiday="+str(unchecked_holiday))
         if unchecked_holiday != False:
-            print(unchecked_holiday)
-            print(while_holiday)
-            if while_holiday == False:
-                try:
-                    currnet_holiday = unchecked_holiday
+            try:
+                    currnet_holiday = unchecked_holiday[0]
                     self.Current_Holiday_Kind.setText(
                                 f"نوع الاجازة : {currnet_holiday['the_kind_of_holiday']}"
                             )
@@ -1697,40 +1905,42 @@ class Ui_MainWindow(object):
                     self.Remaining_Days.setText(
                                 f"الايام المتبقية : {currnet_holiday['remaining_days']}"
                             )
-                except TypeError:
+            except TypeError:
+                    print(TypeError)
                     self.Current_Holiday_Kind.setText(f"نوع الاجازة : ")
                     self.Current_Holiday_Duration.setText(f"مدة الاجازة :")
                     self.Current_Holiday_Start.setText(f"تاريخ البدء : ")
                     self.Current_Holiday_End.setText(f"تاريخ الانتهاء :")
                     self.Absence_Period.setText(f"فترة المطوف : ")
                     self.Remaining_Days.setText(f"الايام المتبقية : ")
-            else:
-                currnet_holiday = while_holiday
-                self.Current_Holiday_Kind.setText(
-                            f"نوع الاجازة : {currnet_holiday['the_kind_of_holiday']}"
-                        )
-                self.Current_Holiday_Duration.setText(
-                            f"مدة الاجازة : {currnet_holiday['duration_of_vacation']}"
-                        )
-                self.Current_Holiday_Start.setText(
-                            f"تاريخ البدء : {currnet_holiday['start_Date']}"
-                        )
-                self.Current_Holiday_End.setText(
-                            f"تاريخ الانتهاء : {currnet_holiday['return_date']}"
-                        )
-                self.Absence_Period.setText(
-                            f"فترة المطوف : {currnet_holiday['duration_of_absence']}"
-                        )
-                self.Remaining_Days.setText(
-                            f"الايام المتبقية : {currnet_holiday['remaining_days']}"
-                        )
         else:
-            self.Current_Holiday_Kind.setText(f"نوع الاجازة : ")
-            self.Current_Holiday_Duration.setText(f"مدة الاجازة : ")
-            self.Current_Holiday_Start.setText(f"تاريخ البدء : ")
-            self.Current_Holiday_End.setText(f"تاريخ الانتهاء : ")
-            self.Absence_Period.setText(f"فترة المطوف : ")
-            self.Remaining_Days.setText(f"الايام المتبقية : ")
+            if while_holiday == False:
+                    currnet_holiday = while_holiday
+                    self.Current_Holiday_Kind.setText(
+                                f"نوع الاجازة : {currnet_holiday['the_kind_of_holiday']}"
+                            )
+                    self.Current_Holiday_Duration.setText(
+                                f"مدة الاجازة : {currnet_holiday['duration_of_vacation']}"
+                            )
+                    self.Current_Holiday_Start.setText(
+                                f"تاريخ البدء : {currnet_holiday['start_Date']}"
+                            )
+                    self.Current_Holiday_End.setText(
+                                f"تاريخ الانتهاء : {currnet_holiday['return_date']}"
+                            )
+                    self.Absence_Period.setText(
+                                f"فترة المطوف : {currnet_holiday['duration_of_absence']}"
+                            )
+                    self.Remaining_Days.setText(
+                                f"الايام المتبقية : {currnet_holiday['remaining_days']}"
+                            )
+            else:
+                self.Current_Holiday_Kind.setText(f"نوع الاجازة : ")
+                self.Current_Holiday_Duration.setText(f"مدة الاجازة : ")
+                self.Current_Holiday_Start.setText(f"تاريخ البدء : ")
+                self.Current_Holiday_End.setText(f"تاريخ الانتهاء : ")
+                self.Absence_Period.setText(f"فترة المطوف : ")
+                self.Remaining_Days.setText(f"الايام المتبقية : ")
 
     def check_current_holiday(self, military_number):
         # Connect to the database
@@ -2551,14 +2761,20 @@ class Ui_MainWindow(object):
         self.action_2 = QtWidgets.QAction(MainWindow)
         self.action_2.setObjectName("action_2")
         self.action_2.triggered.connect(self.report)
+
         self.action_3 = QtWidgets.QAction(MainWindow)
         self.action_3.setObjectName("action_3")
         self.action_3.triggered.connect(self.HolidayReset)
+        self.action_4 = QtWidgets.QAction(MainWindow)
+        self.action_4.setObjectName("action_4")
+        self.action_4.triggered.connect(self.report_bydate)
         self.menu.addSeparator()
         self.menu.addAction(self.Add_User)
         self.menu.addSeparator()
         self.menu.addAction(self.action)
         self.menu_2.addAction(self.action_2)
+        self.menu_2.addSeparator()
+        self.menu_2.addAction(self.action_4)
         self.menu_2.addSeparator()
         self.menu_2.addAction(self.action_3)
         self.menubar.addAction(self.menu.menuAction())
@@ -2704,3 +2920,4 @@ class Ui_MainWindow(object):
         self.action.setText(_translate("MainWindow", "تعديل بيانات مدير الوحدة"))
         self.action_2.setText(_translate("MainWindow", "التقرير السنوى"))
         self.action_3.setText(_translate("MainWindow", "تحديث البيانات"))
+        self.action_4.setText(_translate("MainWindow", "تقرير بالتاريخ"))
